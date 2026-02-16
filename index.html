@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="de">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+        <title>Monte-Carlo-Simulationen</title>
+
+        <!-- Icon, Schriftart, CSS -->
+        <link rel="icon" type="image/x-icon" href="/assets/logo.ico" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="styles.css" />
+
+        <!-- PyScript -->
+        <link
+            rel="stylesheet"
+            href="https://pyscript.net/releases/2026.2.1/core.css"
+        />
+        <script
+            type="module"
+            src="https://pyscript.net/releases/2026.2.1/core.js"
+        ></script>
+
+        <!-- Bokeh -->
+        <script
+            type="text/javascript"
+            src="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.js"
+        ></script>
+        <script
+            type="text/javascript"
+            src="https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.8.2.min.js"
+        ></script>
+        <script
+            type="text/javascript"
+            src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.8.2.min.js"
+        ></script>
+        <script
+            type="text/javascript"
+            src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.8.2.min.js"
+        ></script>
+        <script
+            type="text/javascript"
+            src="https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-3.8.2.min.js"
+        ></script>
+        <script type="text/javascript">
+            Bokeh.set_log_level("info");
+        </script>
+
+        <!-- Mini-COI für PyScript Web Workers -->
+        <script src="/mini-coi.js"></script>
+
+        <!-- MathJax für LaTeX -->
+        <script>
+            MathJax = {
+                tex: {
+                    inlineMath: { "[+]": [["$", "$"]] },
+                },
+            };
+        </script>
+        <script
+            defer
+            src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js"
+        ></script>
+
+        <!-- Ladebildschirm -->
+        <script type="module">
+            const loading = document.getElementById("loading");
+            const loadingText = document.getElementById("loading-text");
+            const loadingLoader = document.getElementById("loading-loader");
+            loading.showModal();
+            addEventListener("py:ready", () => {
+                loadingText.classList.add("transition");
+                loadingLoader.classList.add("transition");
+            });
+            addEventListener("py:done", () => {
+                loading.close();
+                if (document.documentElement.dataset.theme === "dark") {
+                    globalThis.schemaWechselnPy(true);
+                }
+            });
+        </script>
+
+        <!-- Farbschema -->
+        <script>
+            function farbschemaErkennen() {
+                var schema = "light";
+                if (localStorage.getItem("theme")) {
+                    if (localStorage.getItem("theme") == "dark") {
+                        schema = "dark";
+                    }
+                } else if (!globalThis.matchMedia) {
+                    return false;
+                } else if (
+                    globalThis.matchMedia("(prefers-color-scheme: dark)")
+                        .matches
+                ) {
+                    schema = "dark";
+                }
+
+                if (schema == "dark") {
+                    document.documentElement.dataset.theme = "dark";
+                }
+            }
+            farbschemaErkennen();
+        </script>
+    </head>
+    <body>
+        <dialog id="loading">
+            <div id="loading-content">
+                <h1 id="loading-text">Lädt...</h1>
+                <div id="loading-loader"><span class="loader"></span></div>
+            </div>
+        </dialog>
+        <header>
+            <img src="/assets/logo.png" alt="Logo" id="logo" width="42" />
+            <h1>Monte-Carlo-Simulationen <wbr />für Wordle</h1>
+            <label id="theme-toggle-container">
+                <input type="checkbox" id="theme-toggle" />
+                <div>
+                    <img
+                        src="/assets/dark_mode.svg"
+                        alt="moon"
+                        id="moon"
+                        width="24"
+                    />
+                    <img
+                        src="/assets/light_mode.svg"
+                        alt="sun"
+                        id="sun"
+                        width="24"
+                    />
+                </div>
+            </label>
+        </header>
+        <main>
+            <p>
+                Diese Seite dient dem Ausführen von Monte-Carlo-Simulationen für
+                verschiedene Wordle-Strategien.
+            </p>
+            <br />
+            <h1>Simulations-Parameter</h1>
+            <div class="hatch-bg">
+                <div id="parameter-container">
+                    <form id="form">
+                        <label for="openers">Eröffnungswörter:</label>
+                        <select id="openers" name="openers" required>
+                            <option value="keine">Keine</option>
+                            <!-- Mathematiker-Artikel 2023 -->
+                            <option value="tarse">tarse</option>
+                            <option value="salet">salet</option>
+                            <option value="caret">caret</option>
+                            <option value="sater">sater</option>
+                            <option value="torse">torse</option>
+                            <!-- Viele Vokale-->
+                            <option value="audio">audio</option>
+                            <option value="adieu">adieu</option>
+                            <!-- Mathematiker-Artikel Doppelwörter 2022 -->
+                            <option value="parse-clint">parse, clint</option>
+                            <option value="crane-split">crane, split</option>
+                            <option value="crine-spalt">crine, spalt</option>
+                            <option value="slant-price">slant, price</option>
+                            <option value="larnt-spice">larnt, spice</option>
+                            <!-- Science Foundation Ireland Tripelwörter -->
+                            <option value="hates-round-climb">
+                                hates, round, climb
+                            </option>
+                            <!-- Benutzerdefiniert -->
+                            <option value="custom">Benutzerdefiniert</option>
+                        </select>
+                        <input
+                            type="text"
+                            id="custom-openers"
+                            name="custom-openers"
+                            placeholder="Deine Wörter (Komma-getrennt)"
+                            pattern="^\s*[A-Za-z]{5}\s*(?:,\s*[A-Za-z]{5}\s*)*$"
+                        />
+                        <label for="strategy">Strategie:</label>
+                        <select id="strategy" name="strategy" required>
+                            <option value="random">
+                                Zufällig aus möglichen Wörtern
+                            </option>
+                            <option value="random-alles">
+                                Zufällige Auswahl
+                            </option>
+                            <option value="probe">Probewörter</option>
+                        </select>
+                        <label for="num-simulations"
+                            >Anzahl der Simulationen ($n$):</label
+                        >
+                        <input
+                            type="number"
+                            inputmode="numeric"
+                            pattern="[0-9]*"
+                            id="num-simulations"
+                            name="num-simulations"
+                            value="1000"
+                            min="1"
+                            max="50000"
+                            required
+                        />
+                        <label for="seed">Seed (optional)</label>
+                        <input
+                            type="text"
+                            id="seed"
+                            name="seed"
+                            placeholder="Seed"
+                        />
+                    </form>
+                </div>
+                <br />
+                <button id="start">Simulation starten</button>
+                <div id="lag-hinweis">
+                    <i class="hinweis">
+                        Bei der ersten Simulation kann es beim Ende zu
+                        Verzögerungen kommen.
+                    </i>
+                </div>
+            </div>
+            <br />
+            <div class="progress-container">
+                <div class="progress-bar" id="progress">
+                    <span id="progress-text">0%</span>
+                </div>
+            </div>
+            <br />
+            <br />
+            <h1>Ergebnisse</h1>
+            <div class="ergebnis-container" id="ergebnis-platzhalter">
+                <i>Hier werden die Ergebnisse der Simulationen angezeigt.</i>
+            </div>
+            <div id="ergebnisse-container"></div>
+        </main>
+        <!-- Farbschema Deferred -->
+        <script defer>
+            const schemaSchalter = document.getElementById("theme-toggle");
+
+            function schemaWechseln(e) {
+                if (e.target.checked) {
+                    localStorage.setItem("theme", "dark");
+                    document.documentElement.dataset.theme = "dark";
+                    schemaSchalter.checked = true;
+                } else {
+                    localStorage.setItem("theme", "light");
+                    document.documentElement.dataset.theme = "light";
+                    schemaSchalter.checked = false;
+                }
+
+                globalThis.schemaWechselnPy(e.target.checked);
+            }
+
+            schemaSchalter.addEventListener("change", schemaWechseln, false);
+
+            if (document.documentElement.dataset.theme === "dark") {
+                schemaSchalter.checked = true;
+            }
+        </script>
+        <!-- PyScript Skripte -->
+        <section class="pyscript">
+            <script
+                worker
+                type="py"
+                name="monte_carlo"
+                src="./monte_carlo.py"
+                config="./monte_carlo.toml"
+            ></script>
+            <script type="py" src="./main.py" config="./main.toml"></script>
+        </section>
+        <hr id="footer-hr" />
+        <footer>
+            <i>&copy; 2026 Timmy</i>
+        </footer>
+    </body>
+</html>
