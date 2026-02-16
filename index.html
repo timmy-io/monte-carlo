@@ -7,7 +7,7 @@
         <base href="/monte-carlo/" />
 
         <!-- Icon, Schriftart, CSS -->
-        <link rel="icon" type="image/x-icon" href="/assets/logo.ico" />
+        <link rel="icon" type="image/x-icon" href="assets/logo.ico" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
@@ -52,7 +52,7 @@
         </script>
 
         <!-- Mini-COI für PyScript Web Workers -->
-        <script src="/mini-coi.js"></script>
+        <script src="mini-coi.js"></script>
 
         <!-- MathJax für LaTeX -->
         <script>
@@ -117,19 +117,19 @@
             </div>
         </dialog>
         <header>
-            <img src="/assets/logo.png" alt="Logo" id="logo" width="42" />
-            <h1>Monte-Carlo-Simulationen <wbr />für Wordle</h1>
+            <img src="assets/logo.png" alt="Logo" id="logo" width="42" />
+            <h1>Monte-Carlo-Simulationen für Wordle</h1>
             <label id="theme-toggle-container">
                 <input type="checkbox" id="theme-toggle" />
                 <div>
                     <img
-                        src="/assets/dark_mode.svg"
+                        src="assets/dark_mode.svg"
                         alt="moon"
                         id="moon"
                         width="24"
                     />
                     <img
-                        src="/assets/light_mode.svg"
+                        src="assets/light_mode.svg"
                         alt="sun"
                         id="sun"
                         width="24"
@@ -265,10 +265,10 @@
                 worker
                 type="py"
                 name="monte_carlo"
-                src="./monte_carlo.py"
-                config="./monte_carlo.toml"
+                src="monte_carlo.py"
+                config="monte_carlo.toml"
             ></script>
-            <script type="py" src="./main.py" config="./main.toml"></script>
+            <script type="py" src="main.py" config="main.toml"></script>
         </section>
         <hr id="footer-hr" />
         <footer>
@@ -276,4 +276,5 @@
         </footer>
     </body>
 </html>
+
 
