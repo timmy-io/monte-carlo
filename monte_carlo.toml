@@ -1,4 +1,3 @@
 [files]
-"./data/wortliste.txt" = "wortliste.txt"
-"./data/wortliste_richtig.txt" = "wortliste_richtig.txt"
-
+"https://timmy-io.github.io/monte-carlo/data/wortliste.txt" = "wortliste.txt"
+"https://timmy-io.github.io/monte-carlo/data/wortliste_richtig.txt" = "wortliste_richtig.txt"
