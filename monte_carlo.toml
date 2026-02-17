@@ -1,3 +1,4 @@
 [files]
-"../data/wortliste.txt" = "wortliste.txt"
-"../data/wortliste_richtig.txt" = "wortliste_richtig.txt"
+"./data/wortliste.txt" = "wortliste.txt"
+"./data/wortliste_richtig.txt" = "wortliste_richtig.txt"
+
