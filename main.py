@@ -148,19 +148,23 @@ simulation_anzahl = 0
 
 
 @when("click", "#start")
-async def simulation_starten(event):
+async def simulation_starten_click(event):
+    await simulation_starten()
+
+
+async def simulation_starten(sim_wort=""):
     global simulation_anzahl
     global dark_theme
 
     form = web.page["form"]
-    openers = web.page["openers"]
+    openers = web.page["openers"].value if sim_wort == "" else sim_wort
     custom_openers = web.page["custom-openers"]
     strategie = web.page["strategy"].value
     strategie_text = web.page["strategy"].options[web.page["strategy"].selectedIndex].text
     hilfsmittel = (web.page["secret"].checked, web.page["history"].checked)
     seed = web.page["seed"].value
 
-    hat_custom_woerter = openers.value == "custom"
+    hat_custom_woerter = openers == "custom" and sim_wort == ""
     custom_openers.required = hat_custom_woerter
     if not form.checkValidity():
         form.reportValidity()
@@ -168,11 +172,11 @@ async def simulation_starten(event):
 
     eroeffnungswoerter = []
     if not hat_custom_woerter:
-        eroeffnungswoerter = openers.value.split("-")
+        eroeffnungswoerter = openers.split("-")
     else:
         eroeffnungswoerter = "".join(custom_openers.value.split()).split(",")
 
-    if openers.value == "keine":
+    if openers == "keine":
         eroeffnungswoerter = []
 
     mc = await workers["monte_carlo"]
@@ -252,6 +256,8 @@ async def simulation_starten(event):
     <p>Simulationen: $n={n}$</p>
     <p>Eröffnungswörter: <span class="grau">{", ".join(eroeffnungswoerter) if len(eroeffnungswoerter) != 0 else "Keine"}</span></p>
     <p>Strategie: <span class="grau">{strategie_text}</span></p>
+    <p>Geheime Liste: <span class="grau">{"ja" if hilfsmittel[0] else "nein"}</span><p/>
+    <p>Historie: <span class="grau">{"ja" if hilfsmittel[1] else "nein"}</span><p/>
     <p>Seed: <span class="grau">{seed if seed != "" else "Kein Seed wurde benutzt"}</span><p/>
     <h3>Ergebnisse</h3>
     <p>Arithmetisches Mittel: <span class="grau">${arithmetisches_mittel}$</span> | Median: <span class="grau">${median_wert}$</span></p>
@@ -274,6 +280,16 @@ async def simulation_starten(event):
     Bokeh.embed.embed_item(js_object)
 
     simulation_anzahl += 1
+    print(median_wert, arithmetisches_mittel, s,
+          str(rel_anzahl).replace(" ", "")[1:][:-1])
+
+
+@when("click", "#start-all")
+async def alle_simulationen_starten(event):
+    woerter = ["keine", "tarse", "salet", "caret", "sater", "torse", "audio", "adieu",
+               "parse-clint", "crane-split", "crine-spalt", "slant-price", "larnt-spice", "hates-round-climb"]
+    for wort in woerter:
+        await simulation_starten(sim_wort=wort)
 
 
 def schema_wechseln(dark: bool):

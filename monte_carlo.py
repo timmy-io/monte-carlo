@@ -12,11 +12,13 @@ with open("wortliste_richtig.txt", "r") as file:
 with open("wortliste_historie.txt", "r") as file:
     wortliste_historie = file.read().splitlines()
 
+cache = {}
+
 
 # Simuliert n Spiele mit den gegebenen Präferenzen, gibt Liste mit den Ergebnissen der einzelnen Simulationen zurück
 def wort_analysieren(eroeffnungswoerter: list[str], strategie: str, hilfsmittel: tuple[bool, bool], n: int, seed) -> list[int]:
-    print(
-        f"Starte Simulation mit Eröffnungswörtern {eroeffnungswoerter}, Strategie {strategie}, Seed {str(seed)} und {n} Durchläufen.")
+    print(f"""Starte Simulation mit Eröffnungswörtern {eroeffnungswoerter if len(eroeffnungswoerter) != 0 else "/"},
+          Strategie {strategie}, Seed {str(seed)}, Hilfsmitteln {hilfsmittel} und {n} Durchläufen.""")
     geheim_rng = Random(x=seed)
     raten_rng = Random(x=((str(seed) + "2") if seed != None else None))
     daten = []
@@ -27,10 +29,13 @@ def wort_analysieren(eroeffnungswoerter: list[str], strategie: str, hilfsmittel:
             web.page["progress-text"].innerText = str(int(prozent)) + "%"
             web.page["progress"].style["width"] = str(prozent) + "%"
             naechste_aktualisierung += 1
-        geheimes_wort = geheim_rng.choice(wortliste_richtig)
+        geheimes_wort = geheim_rng.choice(
+            list(set(wortliste_richtig) - set(wortliste_historie)))
         versuche = spiel_simulieren(
             geheimes_wort, raten_rng, eroeffnungswoerter, strategie, hilfsmittel)
         daten.append(versuche)
+    global cache
+    cache = {}
     web.page["progress-text"].innerText = "100%"
     web.page["progress"].style["width"] = "100%"
 
@@ -84,7 +89,6 @@ def versuch_farben(geheim: str, versuch: str) -> list[int]:
     return result
 
 
-# TODO Hashmap cache
 def naechstes_wort_erraten(rng: Random, versuch: int, strategie: str, hilfsmittel: tuple[bool, bool],
                            grau: set[tuple[str, int]], gelb: set[tuple[str, int]], gruen: set[tuple[str, int]]) -> str:
     match strategie:
@@ -97,7 +101,17 @@ def naechstes_wort_erraten(rng: Random, versuch: int, strategie: str, hilfsmitte
             moegliche_woerter_set = moegliche_woerter(grau, gelb, gruen)
             moegliche_woerter_set = sorted(
                 hilfsmittel_anwenden(moegliche_woerter_set, hilfsmittel))
+            global cache
             if len(moegliche_woerter_set) > 2 and versuch != 6:
+                key = (
+                    (hilfsmittel[0], hilfsmittel[1]),
+                    frozenset(grau),
+                    frozenset(gelb),
+                    frozenset(gruen),
+                )
+                if key in cache:
+                    return cache[key]
+
                 kandidaten = set(wortliste)
                 for grauer_buchstabe, index in grau:
                     grau_set = set()
@@ -136,10 +150,11 @@ def naechstes_wort_erraten(rng: Random, versuch: int, strategie: str, hilfsmitte
                     if punkte > max_punkte:
                         max_wort = wort
                         max_punkte = punkte
-                print(max_wort, max_punkte)
+
+                cache[key] = max_wort
                 return max_wort
 
-    return rng.choice(moegliche_woerter_set)
+            return rng.choice(moegliche_woerter_set)
 
 
 def moegliche_woerter(grau: set[tuple[str, int]], gelb: set[tuple[str, int]], gruen: set[tuple[str, int]]) -> set[str]:
@@ -191,10 +206,10 @@ def hilfsmittel_anwenden(moeglich: set[str], hilfsmittel: tuple[bool, bool]) -> 
     geheime_woerter_erlaubt = hilfsmittel[0]
     historie_erlaubt = hilfsmittel[1]
     mit_hilfsmitteln = set(moeglich)
-    if historie_erlaubt:
-        mit_hilfsmitteln = mit_hilfsmitteln - wortliste_historie
     if geheime_woerter_erlaubt:
         mit_hilfsmitteln = mit_hilfsmitteln.intersection(wortliste_richtig)
+    if historie_erlaubt:
+        mit_hilfsmitteln = mit_hilfsmitteln - set(wortliste_historie)
     return mit_hilfsmitteln
 
 

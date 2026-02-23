@@ -324,7 +324,7 @@ option:checked {
 #parameter-container input:not(input[type="checkbox"]),
 #parameter-container button,
 #parameter-container select,
-#start,
+.start,
 #cheats {
     width: min(30rem, 100%);
     box-sizing: border-box;
@@ -345,7 +345,7 @@ input[type="checkbox"] {
     margin-right: 0.5rem;
 }
 
-#start {
+.start {
     margin-top: 8px;
     padding-inline: 40px;
     transition:
@@ -363,19 +363,19 @@ input[type="checkbox"] {
     display: block;
 }
 
-#start:hover {
+.start:hover {
     color: #31333f;
     background-position: -3rem 0;
 }
 
 @media screen and (min-width: 500px) {
-    #start:hover {
+    .start:hover {
         background-position: -3rem 0;
     }
 }
 
 @media screen and (max-width: 500px) {
-    #start:hover {
+    .start:hover {
         background-position: -1.5rem 0;
     }
 }
