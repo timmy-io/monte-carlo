@@ -181,14 +181,35 @@
                         />
                         <label for="strategy">Strategie:</label>
                         <select id="strategy" name="strategy" required>
+                            <option value="probe">Probewörter (einfach)</option>
                             <option value="random">
-                                Zufällig aus möglichen Wörtern
+                                Zufällig aus möglichen Wörtern (schwer)
                             </option>
                             <option value="random-alles">
                                 Zufällige Auswahl
                             </option>
-                            <option value="probe">Probewörter</option>
                         </select>
+                        <label for="cheats">Hilfsmittel:</label>
+                        <div id="cheats">
+                            <div>
+                                <input
+                                    type="checkbox"
+                                    name="secret"
+                                    id="secret"
+                                />
+                                <label for="secret">Geheime Liste</label>
+                            </div>
+                            <div>
+                                <input
+                                    type="checkbox"
+                                    name="history"
+                                    id="history"
+                                />
+                                <label for="history"
+                                    >Historie von Wörtern</label
+                                >
+                            </div>
+                        </div>
                         <label for="num-simulations"
                             >Anzahl der Simulationen ($n$):</label
                         >
@@ -276,5 +297,3 @@
         </footer>
     </body>
 </html>
-
-

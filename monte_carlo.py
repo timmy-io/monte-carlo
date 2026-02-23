@@ -9,15 +9,16 @@ with open("wortliste.txt", "r") as file:
 with open("wortliste_richtig.txt", "r") as file:
     wortliste_richtig = file.read().splitlines()
 
-seed = 0
-rng = Random(x=seed)
+with open("wortliste_historie.txt", "r") as file:
+    wortliste_historie = file.read().splitlines()
 
 
 # Simuliert n Spiele mit den gegebenen Präferenzen, gibt Liste mit den Ergebnissen der einzelnen Simulationen zurück
-def wort_analysieren(eroeffnungswoerter: list[str], strategie: str, n: int, seed) -> list[int]:
+def wort_analysieren(eroeffnungswoerter: list[str], strategie: str, hilfsmittel: tuple[bool, bool], n: int, seed) -> list[int]:
     print(
         f"Starte Simulation mit Eröffnungswörtern {eroeffnungswoerter}, Strategie {strategie}, Seed {str(seed)} und {n} Durchläufen.")
-    # TODO Strategie und Seed implementieren
+    geheim_rng = Random(x=seed)
+    raten_rng = Random(x=((str(seed) + "2") if seed != None else None))
     daten = []
     naechste_aktualisierung = 0
     for i in range(n):
@@ -26,7 +27,9 @@ def wort_analysieren(eroeffnungswoerter: list[str], strategie: str, n: int, seed
             web.page["progress-text"].innerText = str(int(prozent)) + "%"
             web.page["progress"].style["width"] = str(prozent) + "%"
             naechste_aktualisierung += 1
-        versuche = spiel_simulieren(eroeffnungswoerter)
+        geheimes_wort = geheim_rng.choice(wortliste_richtig)
+        versuche = spiel_simulieren(
+            geheimes_wort, raten_rng, eroeffnungswoerter, strategie, hilfsmittel)
         daten.append(versuche)
     web.page["progress-text"].innerText = "100%"
     web.page["progress"].style["width"] = "100%"
@@ -35,12 +38,11 @@ def wort_analysieren(eroeffnungswoerter: list[str], strategie: str, n: int, seed
 
 
 # Simuliert ein Spiel und gibt die Anzahl der Versuche zurück, die benötigt wurden, um das Wort zu erraten
-def spiel_simulieren(eroeffnungswoerter: list[str]) -> int:
+def spiel_simulieren(geheimes_wort: str, rng: Random, eroeffnungswoerter: list[str], strategie: str, hilfsmittel: tuple[bool, bool]) -> int:
     grau = set()
     gelb = set()
     gruen = set()
 
-    korrektes_wort = rng.choice(wortliste_richtig)
     versuche = 0
     versuch_verlauf = []
     while versuche < 7:
@@ -50,13 +52,14 @@ def spiel_simulieren(eroeffnungswoerter: list[str]) -> int:
         if len(eroeffnungswoerter) >= versuche:
             versuch = eroeffnungswoerter[versuche - 1]
         else:
-            versuch = naechstes_wort_erraten(grau, gelb, gruen)
+            versuch = naechstes_wort_erraten(
+                rng, versuche, strategie, hilfsmittel, grau, gelb, gruen)
         versuch_verlauf.append(versuch)
         # Wort wurde richtig erraten
-        if versuch == korrektes_wort:
+        if versuch == geheimes_wort:
             break
         # Neue Information speichern
-        farben = versuch_farben(korrektes_wort, versuch)
+        farben = versuch_farben(geheimes_wort, versuch)
         for i in range(len(versuch)):
             buchstabe = versuch[i]
             farbe = farben[i]
@@ -64,17 +67,15 @@ def spiel_simulieren(eroeffnungswoerter: list[str]) -> int:
                 case -1: grau.add((buchstabe, i))
                 case 0: gelb.add((buchstabe, i))
                 case 1: gruen.add((buchstabe, i))
-    # if versuche == 7:
-    #     print(f"Versuche: {versuch_verlauf}, Richtiges Wort: {korrektes_wort}")
     return versuche
 
 
 # Farbliche Markierung der Buchstaben im Versuch: grau => -1, gelb => 0, grün => 1
-def versuch_farben(korrekt: str, versuch: str) -> list[int]:
+def versuch_farben(geheim: str, versuch: str) -> list[int]:
     result = []
     for char_index in range(len(versuch)):
-        if versuch[char_index] in korrekt:
-            if versuch[char_index] == korrekt[char_index]:
+        if versuch[char_index] in geheim:
+            if versuch[char_index] == geheim[char_index]:
                 result.append(1)
             else:
                 result.append(0)
@@ -83,20 +84,61 @@ def versuch_farben(korrekt: str, versuch: str) -> list[int]:
     return result
 
 
-def naechstes_wort_erraten(grau: set[tuple[str, int]], gelb: set[tuple[str, int]], gruen: set[tuple[str, int]]) -> str:
-    moegliche_woerter_set = sorted(moegliche_woerter(grau, gelb, gruen))
-    # TODO: Probewörter
-    # if len(moegliche_woerter_set) > 3:
-    #     alle_buchstaben = {}
-    #     for wort in moegliche_woerter_set:
-    #         for buchstabe in wort:
-    #             if buchstabe not in alle_buchstaben:
-    #                 alle_buchstaben[buchstabe] = 0
-    #             alle_buchstaben[buchstabe] += 1
-    #     for buchstabe, _ in gruen:
-    #         alle_buchstaben.pop(buchstabe, None)
-    #     for buchstabe, _ in gelb:
-    #         alle_buchstaben.pop(buchstabe, None)
+# TODO Hashmap cache
+def naechstes_wort_erraten(rng: Random, versuch: int, strategie: str, hilfsmittel: tuple[bool, bool],
+                           grau: set[tuple[str, int]], gelb: set[tuple[str, int]], gruen: set[tuple[str, int]]) -> str:
+    match strategie:
+        case "random":
+            moegliche_woerter_set = moegliche_woerter(grau, gelb, gruen)
+            return rng.choice(sorted(hilfsmittel_anwenden(moegliche_woerter_set, hilfsmittel)))
+        case "random-alles":
+            return rng.choice(sorted(hilfsmittel_anwenden(set(wortliste), hilfsmittel)))
+        case "probe":
+            moegliche_woerter_set = moegliche_woerter(grau, gelb, gruen)
+            moegliche_woerter_set = sorted(
+                hilfsmittel_anwenden(moegliche_woerter_set, hilfsmittel))
+            if len(moegliche_woerter_set) > 2 and versuch != 6:
+                kandidaten = set(wortliste)
+                for grauer_buchstabe, index in grau:
+                    grau_set = set()
+                    for x in alphabet_liste[grauer_buchstabe]:
+                        grau_set = grau_set.union(x)
+                    kandidaten = kandidaten - grau_set
+
+                for wort in kandidaten.copy():
+                    for gelber_buchstabe, index in gelb:
+                        if wort[index] == gelber_buchstabe:
+                            kandidaten.remove(wort)
+                            break
+
+                alle_buchstaben = {}
+                for wort in moegliche_woerter_set:
+                    for buchstabe in wort:
+                        if buchstabe not in alle_buchstaben:
+                            alle_buchstaben[buchstabe] = 0
+                        alle_buchstaben[buchstabe] += 1
+                for buchstabe, _ in gruen:
+                    alle_buchstaben.pop(buchstabe, None)
+
+                max_punkte = -9999999
+                max_wort = "xxxxx"
+                for wort in kandidaten.copy():
+                    punkte = 0
+                    buchstaben = ""
+                    for buchstabe in wort:
+                        if buchstabe not in alle_buchstaben.keys():
+                            punkte -= 10
+                        elif buchstabe not in buchstaben:
+                            punkte += alle_buchstaben[buchstabe]
+                        if buchstabe in buchstaben:
+                            punkte -= 100
+                        buchstaben += buchstabe
+                    if punkte > max_punkte:
+                        max_wort = wort
+                        max_punkte = punkte
+                print(max_wort, max_punkte)
+                return max_wort
+
     return rng.choice(moegliche_woerter_set)
 
 
@@ -143,6 +185,17 @@ def moegliche_woerter(grau: set[tuple[str, int]], gelb: set[tuple[str, int]], gr
                 break
 
     return moeglich_set
+
+
+def hilfsmittel_anwenden(moeglich: set[str], hilfsmittel: tuple[bool, bool]) -> set[str]:
+    geheime_woerter_erlaubt = hilfsmittel[0]
+    historie_erlaubt = hilfsmittel[1]
+    mit_hilfsmitteln = set(moeglich)
+    if historie_erlaubt:
+        mit_hilfsmitteln = mit_hilfsmitteln - wortliste_historie
+    if geheime_woerter_erlaubt:
+        mit_hilfsmitteln = mit_hilfsmitteln.intersection(wortliste_richtig)
+    return mit_hilfsmitteln
 
 
 # Erstellt fünf Listen für jeden Buchstaben mit Wörtern, die den Buchstaben an der 1./2./3./4./5. Position haben

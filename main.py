@@ -5,9 +5,8 @@ from math import sqrt
 import json
 from bokeh.embed import json_item
 from bokeh.plotting import figure
-from bokeh.models.tools import WheelZoomTool
+from bokeh.models import ColumnDataSource, LinearAxis, Range1d
 from bokeh.themes import Theme
-from bokeh.models.css import GlobalInlineStyleSheet
 
 LIGHT_THEME = {
     "attrs": {
@@ -158,6 +157,7 @@ async def simulation_starten(event):
     custom_openers = web.page["custom-openers"]
     strategie = web.page["strategy"].value
     strategie_text = web.page["strategy"].options[web.page["strategy"].selectedIndex].text
+    hilfsmittel = (web.page["secret"].checked, web.page["history"].checked)
     seed = web.page["seed"].value
 
     hat_custom_woerter = openers.value == "custom"
@@ -178,7 +178,7 @@ async def simulation_starten(event):
     mc = await workers["monte_carlo"]
     n = int(web.page["num-simulations"].value)
 
-    daten = await mc.wort_analysieren(eroeffnungswoerter, strategie, n, seed if seed != "" else None)
+    daten = await mc.wort_analysieren(eroeffnungswoerter, strategie, hilfsmittel, n, seed if seed != "" else None)
 
     durchschnitt_verlauf = []
     summe = 0
@@ -200,6 +200,8 @@ async def simulation_starten(event):
 
     p = figure(width=400, height=400,
                tools="pan,wheel_zoom,reset,save", active_scroll="wheel_zoom", sizing_mode="scale_both")
+    p.axis.axis_label_text_font_size = "10pt"
+    p.axis.major_label_text_font_size = "9pt"
     p.toolbar.logo = None
     p.line(nummierte_liste, durchschnitt_verlauf,
            line_width=2, line_color=color)
@@ -209,15 +211,30 @@ async def simulation_starten(event):
     versuche = []
     anzahl = []
     for i in range(1, 8):
-        versuche.append(str(i) if i != 8 else "Nicht erraten")
+        versuche.append(str(i) if i != 7 else "Nicht erraten")
         anzahl.append(daten.count(i))
+    rel_anzahl = [i / len(daten) for i in anzahl]
+    src = ColumnDataSource(
+        data={"x": versuche, "absolute": anzahl, "relative": rel_anzahl})
     b = figure(x_range=versuche, width=400, height=400,
-               tools="hover,save", tooltips="@x Versuche: @top", sizing_mode="scale_both")
-    b.vbar(x=versuche, top=anzahl, width=0.9, color=color)
+               tools="hover,save", tooltips=[
+                   ("Versuche", "@x"),
+                   ("Absolute Häufigkeit", "@absolute"),
+                   ("Relative Häufigkeit", "@relative{0.00%}")
+               ], sizing_mode="scale_both", y_range=(0, 1.05 * max(anzahl)))
+    b.vbar(x="x", top="absolute", width=0.9, color=color, source=src)
     b.xgrid.grid_line_color = None
     b.toolbar.logo = None
+    b.axis.axis_label_text_font_size = "10pt"
+    b.yaxis.major_label_text_font_size = "9pt"
+    b.xaxis.major_label_text_font_size = "8pt"
     b.xaxis.axis_label = r"Anzahl Versuche ($$x$$)"
-    b.yaxis.axis_label = r"Absolute Häufigkeit"
+    b.yaxis.axis_label = r"Absolute H\"aufigkeit ($$H_n(x)$$)"
+
+    b.add_layout(LinearAxis(y_range_name="relative", axis_label_text_font_size="10pt",
+                 axis_label=r"Relative H\"aufigkeit ($$h_n(x)$$)"), "right")
+    b.extra_y_ranges = {"relative": Range1d(
+        start=0, end=1.05 * max(rel_anzahl))}
 
     platzhalter = document.getElementById("ergebnis-platzhalter")
     if platzhalter:
@@ -232,7 +249,7 @@ async def simulation_starten(event):
     sim_div.innerHTML = f"""
     <h2>Simulation Nr. ${simulation_anzahl + 1}$</h2>
     <h3>Parameter</h3>
-    <p>$n={n}$</p>
+    <p>Simulationen: $n={n}$</p>
     <p>Eröffnungswörter: <span class="grau">{", ".join(eroeffnungswoerter) if len(eroeffnungswoerter) != 0 else "Keine"}</span></p>
     <p>Strategie: <span class="grau">{strategie_text}</span></p>
     <p>Seed: <span class="grau">{seed if seed != "" else "Kein Seed wurde benutzt"}</span><p/>

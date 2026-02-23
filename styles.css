@@ -249,7 +249,8 @@ select:open::picker-icon {
 
 select,
 button,
-input {
+input,
+#cheats {
     font-size: 1rem;
     padding: 0.5rem 2rem;
     border: 1px solid var(--outline);
@@ -320,12 +321,28 @@ option:checked {
     color: #31333f;
 }
 
-#parameter-container input,
+#parameter-container input:not(input[type="checkbox"]),
 #parameter-container button,
 #parameter-container select,
-#start {
+#start,
+#cheats {
     width: min(30rem, 100%);
     box-sizing: border-box;
+}
+
+#cheats {
+    display: block;
+}
+
+label[for="secret"],
+label[for="history"],
+input[type="checkbox"] {
+    display: inline-block;
+    margin: 0;
+}
+
+input[type="checkbox"] {
+    margin-right: 0.5rem;
 }
 
 #start {
@@ -444,8 +461,8 @@ footer {
 .bokeh-plot,
 .bokeh-bar {
     display: inline-block;
-    margin: 1rem;
-    width: calc(100vw - min(8rem, 10vw) - 2rem - min(8rem, 10vw));
+    margin: 0.5rem;
+    width: calc(100vw - min(8rem, 10vw) - 1rem - min(8rem, 10vw));
     max-width: 450px;
 }
 
@@ -453,7 +470,7 @@ footer {
     .bokeh-plot,
     .bokeh-bar {
         width: calc(
-            calc(100vw - min(8rem, 10vw) - 2rem - min(8rem, 10vw)) / 2 - 2rem
+            calc(100vw - min(8rem, 10vw) - 1rem - min(8rem, 10vw)) / 2 - 2rem
         );
     }
 }
@@ -461,7 +478,7 @@ footer {
 @media screen and (max-width: 670px) {
     .bokeh-plot,
     .bokeh-bar {
-        width: calc(100vw - min(8rem, 10vw) - 2rem - min(8rem, 10vw));
+        width: calc(100vw - min(8rem, 10vw) - 1rem - min(8rem, 10vw));
     }
 }
 
@@ -469,7 +486,7 @@ footer {
     .bokeh-plot,
     .bokeh-bar {
         margin-inline: 9vw;
-        width: calc(100vw - min(8rem, 10vw) - 2rem - min(8rem, 10vw) - 18vw);
+        width: calc(100vw - min(8rem, 10vw) - 1rem - min(8rem, 10vw) - 18vw);
     }
 }
 
@@ -557,4 +574,8 @@ h3 {
 
 .grau {
     color: color-mix(in srgb, var(--text) 70%, transparent);
+}
+
+.ergebnis-container p {
+    line-height: 1.6rem;
 }

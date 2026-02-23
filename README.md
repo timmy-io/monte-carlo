@@ -6,3 +6,4 @@
 - [Mini-COI](https://github.com/WebReflection/mini-coi) lizensiert unter MIT
 - wortliste.txt von nytimes.com
 - wortliste_richtig.txt von Alex Selby
+- wortliste_historie.txt von fiveforks.com
